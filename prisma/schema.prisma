@@ -561,6 +561,44 @@ model Relatorio {
   @@index([usuarioId])
 }
 
+model Template {
+  id            String         @id @default(uuid())
+  nome          String
+  tipo          String        // TipoRelatorio
+  formato       String        // FormatoRelatorio
+  layout        String        @db.Text
+  cabecalho     String?       @db.Text
+  rodape        String?       @db.Text
+  estilos       String?       @db.Text
+  metadata      Json?
+  criadoEm      DateTime      @default(now())
+  atualizadoEm  DateTime      @updatedAt
+  relatorios    Relatorio[]
+}
+
+model Relatorio {
+  id            String         @id @default(uuid())
+  templateId    String
+  template      Template       @relation(fields: [templateId], references: [id])
+  tipo          String        // TipoRelatorio
+  formato       String        // FormatoRelatorio
+  status        String        // StatusRelatorio
+  filtros       Json?
+  arquivoUrl    String?
+  erros         Json?
+  metadata      Json?
+  criadoEm      DateTime      @default(now())
+  atualizadoEm  DateTime      @updatedAt
+  usuarioId     Int
+  usuario       Usuario       @relation(fields: [usuarioId], references: [id])
+
+  @@index([templateId])
+  @@index([usuarioId])
+  @@index([tipo])
+  @@index([status])
+  @@index([criadoEm])
+}
+
 model Documento {
   id                String      @id @default(uuid())
   tipo              String
@@ -715,4 +753,270 @@ model LogIntegracao {
   @@map("logs_integracao")
   @@index([apiKeyId, dataHora])
   @@index([statusCode])
+}
+
+// Monitoramento
+enum TipoMetrica {
+  CONTADOR
+  MEDIDOR
+  HISTOGRAMA
+  RESUMO
+}
+
+enum TipoAlerta {
+  THRESHOLD
+  ANOMALIA
+  TENDENCIA
+}
+
+enum SeveridadeAlerta {
+  INFO
+  WARNING
+  ERROR
+  CRITICAL
+}
+
+enum StatusAlerta {
+  ATIVO
+  RESOLVIDO
+  IGNORADO
+  EM_ANALISE
+}
+
+model Metrica {
+  id            String        @id @default(uuid())
+  nome          String
+  descricao     String
+  tipo          TipoMetrica
+  tags          Json         @default("{}")
+  unidade       String?
+  valor         Float?
+  valores       Float[]
+  buckets       Float[]
+  contagens     Int[]
+  percentis     Json?
+  criadoEm      DateTime     @default(now())
+  atualizadoEm  DateTime     @updatedAt
+  regrasAlerta  RegraAlerta[]
+
+  @@map("metricas")
+  @@index([nome])
+  @@index([tipo])
+  @@index([criadoEm])
+}
+
+model RegraAlerta {
+  id            String           @id @default(uuid())
+  nome          String
+  descricao     String
+  tipo          TipoAlerta
+  metricaId     String
+  metrica       Metrica          @relation(fields: [metricaId], references: [id], onDelete: Cascade)
+  severidade    SeveridadeAlerta
+  condicao      String
+  intervalo     Int
+  notificar     String[]
+  ativo         Boolean          @default(true)
+  criadoEm      DateTime         @default(now())
+  atualizadoEm  DateTime         @updatedAt
+  alertas       Alerta[]
+
+  @@map("regras_alerta")
+  @@index([metricaId])
+  @@index([tipo])
+  @@index([severidade])
+}
+
+model Alerta {
+  id            String       @id @default(uuid())
+  regraId       String
+  regra         RegraAlerta  @relation(fields: [regraId], references: [id], onDelete: Cascade)
+  status        StatusAlerta
+  valor         Float
+  mensagem      String
+  detalhes      Json?
+  criadoEm      DateTime     @default(now())
+  atualizadoEm  DateTime     @updatedAt
+  resolvidoEm   DateTime?
+
+  @@map("alertas")
+  @@index([regraId])
+  @@index([status])
+  @@index([criadoEm])
+}
+
+model Dashboard {
+  id              String     @id @default(uuid())
+  nome            String
+  descricao       String
+  paineis         Json       @default("[]")
+  compartilhadoCom String[]
+  criadoEm        DateTime   @default(now())
+  atualizadoEm    DateTime   @updatedAt
+
+  @@map("dashboards")
+}
+
+model Log {
+  id          String   @id @default(uuid())
+  nivel       String
+  mensagem    String
+  contexto    Json     @default("{}")
+  origem      String
+  timestamp   DateTime
+  trace       String?
+  usuario     String?
+
+  @@map("logs")
+  @@index([nivel])
+  @@index([origem])
+  @@index([timestamp])
+  @@index([trace])
+}
+
+model Trace {
+  id          String   @id @default(uuid())
+  nome        String
+  inicio      DateTime
+  fim         DateTime
+  duracao     Int
+  servico     String
+  operacao    String
+  status      String
+  tags        Json     @default("{}")
+  spans       Json     @default("[]")
+
+  @@map("traces")
+  @@index([servico])
+  @@index([operacao])
+  @@index([inicio])
+  @@index([status])
+}
+
+// Módulo de Notificações
+enum TipoNotificacao {
+  EMAIL
+  SMS
+  PUSH
+  WHATSAPP
+  WEBHOOK
+}
+
+enum PrioridadeNotificacao {
+  BAIXA
+  MEDIA
+  ALTA
+  CRITICA
+}
+
+enum StatusNotificacao {
+  PENDENTE
+  ENVIANDO
+  ENVIADO
+  ERRO
+  CANCELADO
+}
+
+enum StatusTemplate {
+  ATIVO
+  INATIVO
+  RASCUNHO
+}
+
+model Notificacao {
+  id             String               @id @default(uuid())
+  tipo           TipoNotificacao
+  prioridade     PrioridadeNotificacao
+  status         StatusNotificacao    @default(PENDENTE)
+  destinatario   String
+  titulo         String
+  conteudo       String
+  templateId     String?              @map("template_id")
+  dados          Json?
+  agendadoPara   DateTime?            @map("agendado_para")
+  tentativas     Int                  @default(0)
+  ultimaTentativa DateTime?           @map("ultima_tentativa")
+  erro           String?
+  criadoEm       DateTime             @default(now()) @map("criado_em")
+  atualizadoEm   DateTime             @updatedAt @map("atualizado_em")
+  enviadoEm      DateTime?            @map("enviado_em")
+  
+  template       TemplateNotificacao? @relation(fields: [templateId], references: [id])
+  historico      HistoricoNotificacao[]
+
+  @@index([status])
+  @@index([tipo])
+  @@index([agendadoPara])
+  @@map("notificacoes")
+}
+
+model TemplateNotificacao {
+  id            String         @id @default(uuid())
+  nome          String
+  descricao     String?
+  tipo          TipoNotificacao
+  status        StatusTemplate @default(RASCUNHO)
+  assunto       String
+  conteudo      String
+  html          String?
+  variaveis     String[]      @default([])
+  criadoEm      DateTime      @default(now()) @map("criado_em")
+  atualizadoEm  DateTime      @updatedAt @map("atualizado_em")
+
+  notificacoes  Notificacao[]
+  agendamentos  AgendamentoNotificacao[]
+
+  @@index([nome])
+  @@index([tipo])
+  @@map("templates_notificacao")
+}
+
+model Webhook {
+  id            String    @id @default(uuid())
+  url           String
+  eventos       String[]  @default([])
+  headers       Json?
+  ativo         Boolean   @default(true)
+  secretKey     String?   @map("secret_key")
+  criadoEm      DateTime  @default(now()) @map("criado_em")
+  atualizadoEm  DateTime  @updatedAt @map("atualizado_em")
+  ultimoEnvio   DateTime? @map("ultimo_envio")
+  ultimoStatus  Int?      @map("ultimo_status")
+
+  @@index([url])
+  @@map("webhooks")
+}
+
+model AgendamentoNotificacao {
+  id              String         @id @default(uuid())
+  tipo            TipoNotificacao
+  destinatario    String
+  templateId      String         @map("template_id")
+  dados           Json?
+  expressaoCron   String         @map("expressao_cron")
+  ultimaExecucao  DateTime?      @map("ultima_execucao")
+  proximaExecucao DateTime?      @map("proxima_execucao")
+  ativo           Boolean        @default(true)
+  criadoEm        DateTime       @default(now()) @map("criado_em")
+  atualizadoEm    DateTime       @updatedAt @map("atualizado_em")
+
+  template        TemplateNotificacao @relation(fields: [templateId], references: [id])
+
+  @@index([templateId])
+  @@map("agendamentos_notificacao")
+}
+
+model HistoricoNotificacao {
+  id            String           @id @default(uuid())
+  notificacaoId String          @map("notificacao_id")
+  status        StatusNotificacao
+  tentativa     Int
+  erro          String?
+  dados         Json?
+  criadoEm      DateTime        @default(now()) @map("criado_em")
+
+  notificacao   Notificacao     @relation(fields: [notificacaoId], references: [id], onDelete: Cascade)
+
+  @@index([notificacaoId])
+  @@map("historico_notificacao")
 }
