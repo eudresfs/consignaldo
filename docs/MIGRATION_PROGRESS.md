@@ -1,5 +1,5 @@
 # Progresso da Migração FastConsig → Consignaldo
-**Última Atualização:** 06/02/2025 15:14
+**Última Atualização:** 06/02/2025 15:21
 
 ## 1. Visão Geral
 - **Progresso Total:** 100%
@@ -35,6 +35,9 @@
 ### 2.3 Módulos Pendentes
 | Módulo | Prioridade | Complexidade | Status |
 |--------|------------|--------------|--------|
+| Relatórios | Alta | Média | 🟡 Em desenvolvimento (30%) |
+| Monitoramento | Alta | Alta | 🔄 Planejado |
+| Notificações | Média | Média | 🔄 Planejado |
 
 ## 3. Métricas de Qualidade
 
@@ -147,6 +150,75 @@
   - Documentados todos os endpoints, schemas e responses
   - Adicionadas descrições detalhadas e exemplos
   - Módulo API Pública concluído com sucesso
+
+### 06/02/2025 15:19
+- 📋 Planejamento da Próxima Sessão
+  1. Módulo de Relatórios (Prioridade Alta)
+     - Implementar geração de relatórios em PDF e Excel
+     - Criar templates personalizáveis
+     - Desenvolver endpoints para:
+       - Relatório de Contratos
+       - Relatório de Margem
+       - Relatório de Consignações
+       - Relatório de Performance
+     - Implementar cache de relatórios
+     - Adicionar exportação assíncrona
+     - Desenvolver visualização web
+
+  2. Módulo de Monitoramento (Prioridade Alta)
+     - Integrar Prometheus e Grafana
+     - Configurar métricas de:
+       - Performance da API
+       - Uso de recursos
+       - Taxa de erros
+       - Tempo de resposta
+     - Implementar dashboards para:
+       - Visão geral do sistema
+       - Performance por endpoint
+       - Alertas e anomalias
+     - Configurar alertas automáticos
+
+  3. Módulo de Notificações (Prioridade Média)
+     - Desenvolver sistema de notificações:
+       - Email
+       - SMS
+       - Push
+       - In-app
+     - Implementar templates
+     - Criar fila de processamento
+     - Adicionar retry policy
+     - Desenvolver painel de gestão
+
+### 06/02/2025 15:21
+- 🟡 Módulo de Relatórios - Core implementado (30%)
+  - Criados tipos e interfaces do domínio
+  - Implementados DTOs com validações
+  - Adicionados modelos Prisma (Template e Relatorio)
+  - Desenvolvido repositório com operações CRUD
+  - Próximos passos: implementar serviço e geradores
+
+### Estimativas
+- Módulo de Relatórios: 3 dias
+- Módulo de Monitoramento: 2 dias
+- Módulo de Notificações: 2 dias
+- Testes e Documentação: 1 dia
+
+### Dependências
+- Prometheus e Grafana instalados
+- Serviço de email configurado
+- Provedor de SMS integrado
+- Templates de relatórios definidos
+
+### Riscos
+- Complexidade na geração assíncrona de relatórios grandes
+- Configuração inicial do Prometheus/Grafana
+- Integração com provedores externos de notificação
+
+### Próximos Passos
+1. Preparar ambiente com dependências
+2. Iniciar pelo módulo de Relatórios
+3. Configurar monitoramento em paralelo
+4. Implementar notificações por último
 
 ## 5. Próximos Passos
 
