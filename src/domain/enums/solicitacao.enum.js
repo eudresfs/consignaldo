@@ -1,0 +1,33 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.SolicitacaoTipo = exports.SolicitacaoSituacao = void 0;
+var SolicitacaoSituacao;
+(function (SolicitacaoSituacao) {
+    SolicitacaoSituacao[SolicitacaoSituacao["CANCELADO"] = 0] = "CANCELADO";
+    SolicitacaoSituacao[SolicitacaoSituacao["PENDENTE"] = 1] = "PENDENTE";
+    SolicitacaoSituacao[SolicitacaoSituacao["PROCESSADA"] = 2] = "PROCESSADA";
+    SolicitacaoSituacao[SolicitacaoSituacao["EM_ANALISE"] = 3] = "EM_ANALISE";
+    SolicitacaoSituacao[SolicitacaoSituacao["REDIRECIONADA"] = 4] = "REDIRECIONADA";
+    SolicitacaoSituacao[SolicitacaoSituacao["REJEITADA"] = 5] = "REJEITADA";
+})(SolicitacaoSituacao || (exports.SolicitacaoSituacao = SolicitacaoSituacao = {}));
+var SolicitacaoTipo;
+(function (SolicitacaoTipo) {
+    SolicitacaoTipo[SolicitacaoTipo["INFORMAR_SALDO_DEVEDOR"] = 1] = "INFORMAR_SALDO_DEVEDOR";
+    SolicitacaoTipo[SolicitacaoTipo["INFORMAR_QUITACAO"] = 2] = "INFORMAR_QUITACAO";
+    SolicitacaoTipo[SolicitacaoTipo["CONFIRMAR_REJEITAR_QUITACAO"] = 3] = "CONFIRMAR_REJEITAR_QUITACAO";
+    SolicitacaoTipo[SolicitacaoTipo["CONCLUIR_COMPRA_DIVIDA"] = 4] = "CONCLUIR_COMPRA_DIVIDA";
+    SolicitacaoTipo[SolicitacaoTipo["APROVAR_AVERBACOES"] = 5] = "APROVAR_AVERBACOES";
+    SolicitacaoTipo[SolicitacaoTipo["DESLIQUIDAR_AVERBACOES"] = 6] = "DESLIQUIDAR_AVERBACOES";
+    SolicitacaoTipo[SolicitacaoTipo["CANCELAR_AVERBACOES"] = 7] = "CANCELAR_AVERBACOES";
+    SolicitacaoTipo[SolicitacaoTipo["INFORMAR_PESSOAS_CONTATO"] = 8] = "INFORMAR_PESSOAS_CONTATO";
+    SolicitacaoTipo[SolicitacaoTipo["HOMOLOGAR_AVERBACOES"] = 9] = "HOMOLOGAR_AVERBACOES";
+    SolicitacaoTipo[SolicitacaoTipo["ACOMPANHAR_CLIENTES"] = 10] = "ACOMPANHAR_CLIENTES";
+    SolicitacaoTipo[SolicitacaoTipo["APROVAR_RESERVA_SIMULACAO"] = 11] = "APROVAR_RESERVA_SIMULACAO";
+    SolicitacaoTipo[SolicitacaoTipo["REGULARIZAR_QUITACAO_REJEITADA"] = 12] = "REGULARIZAR_QUITACAO_REJEITADA";
+    SolicitacaoTipo[SolicitacaoTipo["OUVIDORIA"] = 13] = "OUVIDORIA";
+    SolicitacaoTipo[SolicitacaoTipo["ACOMPANHAR_AVERBACAO_SEM_PRIMEIRO_DESCONTO"] = 14] = "ACOMPANHAR_AVERBACAO_SEM_PRIMEIRO_DESCONTO";
+    SolicitacaoTipo[SolicitacaoTipo["MINHAS_SOLICITACOES_COMPRA_AGUARDANDO_SALDO"] = 15] = "MINHAS_SOLICITACOES_COMPRA_AGUARDANDO_SALDO";
+    SolicitacaoTipo[SolicitacaoTipo["MINHAS_SOLICITACOES_COMPRA_AGUARDANDO_LIQUIDACAO"] = 16] = "MINHAS_SOLICITACOES_COMPRA_AGUARDANDO_LIQUIDACAO";
+    SolicitacaoTipo[SolicitacaoTipo["SOLICITACAO_INFORMACAO"] = 17] = "SOLICITACAO_INFORMACAO";
+    SolicitacaoTipo[SolicitacaoTipo["SOLICITACAO_EMPRESTIMO"] = 18] = "SOLICITACAO_EMPRESTIMO";
+})(SolicitacaoTipo || (exports.SolicitacaoTipo = SolicitacaoTipo = {}));

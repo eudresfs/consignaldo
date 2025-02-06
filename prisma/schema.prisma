@@ -8,33 +8,33 @@ datasource db {
 }
 
 model Produto {
-  id          Int         @id @default(autoincrement())
-  nome        String
-  descricao   String
-  preco       Float
-  ativo       Boolean     @default(true)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  averbacoes  Averbacao[]
+  id         Int         @id @default(autoincrement())
+  nome       String
+  descricao  String
+  preco      Float
+  ativo      Boolean     @default(true)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  averbacoes Averbacao[]
 }
 
 model Empresa {
-  id          Int         @id @default(autoincrement())
-  nome        String
-  cnpj        String      @unique
-  ativo       Boolean     @default(true)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  averbacoes  Averbacao[]
+  id         Int         @id @default(autoincrement())
+  nome       String
+  cnpj       String      @unique
+  ativo      Boolean     @default(true)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  averbacoes Averbacao[]
 }
 
 model Perfil {
-  id         Int      @id @default(autoincrement())
-  nome       String
-  descricao  String
-  ativo      Boolean  @default(true)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id        Int      @id @default(autoincrement())
+  nome      String
+  descricao String
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Averbacao {
@@ -45,254 +45,269 @@ model Averbacao {
   situacaoId    Int
   data          DateTime
   valor         Float
-  ativo         Boolean          @default(true)
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
-  funcionario   Funcionario      @relation(fields: [funcionarioId], references: [id])
-  empresa       Empresa          @relation(fields: [empresaId], references: [id])
-  produto       Produto          @relation(fields: [produtoId], references: [id])
+  ativo         Boolean           @default(true)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  funcionario   Funcionario       @relation(fields: [funcionarioId], references: [id])
+  empresa       Empresa           @relation(fields: [empresaId], references: [id])
+  produto       Produto           @relation(fields: [produtoId], references: [id])
   situacao      AverbacaoSituacao @relation(fields: [situacaoId], references: [id])
-  valorTotal    Float            @default(0)
-  saldoDevedor  Float            @default(0)
+  valorTotal    Float             @default(0)
+  saldoDevedor  Float             @default(0)
 }
 
 model Funcionario {
-  id          Int         @id @default(autoincrement())
-  nome        String
-  matricula   String      @unique
-  cargo       String
-  email       String      @unique
-  ativo       Boolean     @default(true)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  usuario     Usuario?
-  averbacoes  Averbacao[]
+  id         Int         @id @default(autoincrement())
+  nome       String
+  matricula  String      @unique
+  cargo      String
+  email      String      @unique
+  ativo      Boolean     @default(true)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  usuario    Usuario?
+  averbacoes Averbacao[]
 }
 
 model Usuario {
-  id            Int          @id @default(autoincrement())
-  login         String       @unique
-  senha         String
-  email         String       @unique
-  ativo         Boolean      @default(true)
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-  funcionario   Funcionario  @relation(fields: [funcionarioId], references: [id])
-  funcionarioId Int          @unique // Aqui mudamos para @unique já que é one-to-one
+  id              Int                @id @default(autoincrement())
+  login           String             @unique
+  senha           String
+  email           String             @unique
+  ativo           Boolean            @default(true)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  funcionario     Funcionario        @relation(fields: [funcionarioId], references: [id])
+  funcionarioId   Int                @unique // Aqui mudamos para @unique já que é one-to-one
+  consignatarias  Consignataria[]    @relation("UsuarioConsignataria")
+  usuarioVinculos UsuarioVinculo[]   @relation("UsuarioVinculo")
+  historicos      UsuarioHistorico[] @relation("UsuarioHistorico")
+  relatorios      Relatorio[]
 }
 
 model AcessoVideo {
-  id          Int      @id @default(autoincrement())
-  usuarioId   Int
-  videoId     Int
-  data        DateTime @default(now())
-  ip          String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        Int      @id @default(autoincrement())
+  usuarioId Int
+  videoId   Int
+  data      DateTime @default(now())
+  ip        String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model AprovacaoFluxo {
-  id          Int      @id @default(autoincrement())
-  descricao   String
-  situacao    Int
-  ordem       Int
-  ativo       Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        Int      @id @default(autoincrement())
+  descricao String
+  situacao  Int
+  ordem     Int
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model AprovacaoNivel {
-  id          Int      @id @default(autoincrement())
-  descricao   String
-  nivel       Int
-  ativo       Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        Int      @id @default(autoincrement())
+  descricao String
+  nivel     Int
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Assunto {
-  id              Int      @id @default(autoincrement())
-  descricao       String
-  prazo           Int
-  ativo           Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  responsaveis    AssuntoResponsavel[]
+  id           Int                  @id @default(autoincrement())
+  descricao    String
+  prazo        Int
+  ativo        Boolean              @default(true)
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  responsaveis AssuntoResponsavel[]
 }
 
 model AssuntoResponsavel {
-  id          Int      @id @default(autoincrement())
-  assuntoId   Int
-  usuarioId   Int
-  ativo       Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  assunto     Assunto  @relation(fields: [assuntoId], references: [id])
+  id        Int      @id @default(autoincrement())
+  assuntoId Int
+  usuarioId Int
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  assunto   Assunto  @relation(fields: [assuntoId], references: [id])
 }
 
 model Auditoria {
-  id              Int      @id @default(autoincrement())
-  usuarioId       Int
-  data            DateTime
-  ip              String
+  id              String      @id @default(uuid())
+  tipo            String
   operacao        String
-  tabela          String
-  chave           String
-  dados           String?  @db.Text
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  criticidade     String
+  usuarioId       Int
+  entidadeId      String?
+  entidadeTipo    String?
+  dadosAnteriores Json?
+  dadosNovos      Json?
+  metadata        Json?
+  ip              String?
+  userAgent       String?
+  dataCriacao     DateTime    @default(now())
+  
+  usuario         Usuario     @relation(fields: [usuarioId], references: [id])
+
+  @@index([tipo])
+  @@index([operacao])
+  @@index([criticidade])
+  @@index([usuarioId])
+  @@index([entidadeId])
+  @@index([entidadeTipo])
+  @@index([dataCriacao])
 }
 
-// Modelos de Averbação
-
 model AverbacaoAjuste {
-  id              Int       @id @default(autoincrement())
-  averbacaoId     Int
-  tipoId          Int
-  usuarioId       Int
-  data            DateTime
-  observacao      String?   @db.Text
-  situacao        Int
-  ativo           Boolean   @default(true)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  
-  tipo            AverbacaoAjusteTipo @relation(fields: [tipoId], references: [id])
-  detalhes        AverbacaoAjusteDetalhe[]
-  arquivos        AverbacaoAjusteArquivo[]
+  id          Int      @id @default(autoincrement())
+  averbacaoId Int
+  tipoId      Int
+  usuarioId   Int
+  data        DateTime
+  observacao  String?  @db.Text
+  situacao    Int
+  ativo       Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tipo     AverbacaoAjusteTipo      @relation(fields: [tipoId], references: [id])
+  detalhes AverbacaoAjusteDetalhe[]
+  arquivos AverbacaoAjusteArquivo[]
 }
 
 model AverbacaoAjusteTipo {
-  id          Int       @id @default(autoincrement())
-  descricao   String
-  ativo       Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  
-  ajustes     AverbacaoAjuste[]
+  id        Int      @id @default(autoincrement())
+  descricao String
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ajustes AverbacaoAjuste[]
 }
 
 model AverbacaoAjusteDetalhe {
-  id              Int       @id @default(autoincrement())
-  ajusteId        Int
-  campo           String
-  valorAnterior   String?
-  valorNovo       String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  
-  ajuste          AverbacaoAjuste @relation(fields: [ajusteId], references: [id])
+  id            Int      @id @default(autoincrement())
+  ajusteId      Int
+  campo         String
+  valorAnterior String?
+  valorNovo     String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  ajuste AverbacaoAjuste @relation(fields: [ajusteId], references: [id])
 }
 
 model AverbacaoAjusteArquivo {
-  id          Int       @id @default(autoincrement())
-  ajusteId    Int
-  nome        String
-  tipo        String
-  tamanho     Int
-  dados       Bytes
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  
-  ajuste      AverbacaoAjuste @relation(fields: [ajusteId], references: [id])
+  id        Int      @id @default(autoincrement())
+  ajusteId  Int
+  nome      String
+  tipo      String
+  tamanho   Int
+  dados     Bytes
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ajuste AverbacaoAjuste @relation(fields: [ajusteId], references: [id])
 }
 
 model AverbacaoHistorico {
-  id              Int       @id @default(autoincrement())
-  averbacaoId     Int
-  usuarioId       Int
-  data            DateTime
-  situacao        Int
-  observacao      String?   @db.Text
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id          Int      @id @default(autoincrement())
+  averbacaoId Int
+  usuarioId   Int
+  data        DateTime
+  situacao    Int
+  observacao  String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model AverbacaoImportacao {
-  id              Int       @id @default(autoincrement())
-  usuarioId       Int
-  data            DateTime
-  arquivo         String
-  situacao        Int
-  log             String?   @db.Text
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id        Int      @id @default(autoincrement())
+  usuarioId Int
+  data      DateTime
+  arquivo   String
+  situacao  Int
+  log       String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model AverbacaoParcela {
-  id              Int       @id @default(autoincrement())
-  averbacaoId     Int
-  numero          Int
-  competencia     String
-  vencimento      DateTime
-  valor           Float
-  situacao        Int
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  
-  situacoes       AverbacaoParcelaSituacao[]
+  id          Int      @id @default(autoincrement())
+  averbacaoId Int
+  numero      Int
+  competencia String
+  vencimento  DateTime
+  valor       Float
+  situacao    Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  situacoes AverbacaoParcelaSituacao[]
 }
 
 model AverbacaoParcelaSituacao {
-  id              Int       @id @default(autoincrement())
-  parcelaId       Int
-  situacao        Int
-  data            DateTime
-  observacao      String?   @db.Text
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  
-  parcela         AverbacaoParcela @relation(fields: [parcelaId], references: [id])
+  id         Int      @id @default(autoincrement())
+  parcelaId  Int
+  situacao   Int
+  data       DateTime
+  observacao String?  @db.Text
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  parcela AverbacaoParcela @relation(fields: [parcelaId], references: [id])
 }
 
 model AverbacaoSituacao {
-  id          Int         @id @default(autoincrement())
-  descricao   String
-  ativo       Boolean     @default(true)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  averbacoes  Averbacao[]
+  id         Int         @id @default(autoincrement())
+  descricao  String
+  ativo      Boolean     @default(true)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  averbacoes Averbacao[]
 }
 
 model AverbacaoTipo {
-  id              Int       @id @default(autoincrement())
-  descricao       String
-  sigla           String
-  prazo           Int
-  valorMinimo     Float
-  valorMaximo     Float
-  ativo           Boolean   @default(true)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id          Int      @id @default(autoincrement())
+  descricao   String
+  sigla       String
+  prazo       Int
+  valorMinimo Float
+  valorMaximo Float
+  ativo       Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model AverbacaoTipoQuitacao {
-  id              Int       @id @default(autoincrement())
-  tipoId          Int
-  tipoQuitacaoId  Int
-  ativo           Boolean   @default(true)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id             Int      @id @default(autoincrement())
+  tipoId         Int
+  tipoQuitacaoId Int
+  ativo          Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 model AverbacaoTramitacao {
-  id              Int       @id @default(autoincrement())
-  averbacaoId     Int
-  usuarioId       Int
-  data            DateTime
-  situacao        Int
-  observacao      String?   @db.Text
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id          Int      @id @default(autoincrement())
+  averbacaoId Int
+  usuarioId   Int
+  data        DateTime
+  situacao    Int
+  observacao  String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model AverbacaoVinculo {
-  id              Int       @id @default(autoincrement())
-  averbacaoId     Int
-  averbacaoPaiId  Int
-  tipo            Int
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id             Int      @id @default(autoincrement())
+  averbacaoId    Int
+  averbacaoPaiId Int
+  tipo           Int
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 enum AverbacaoStatus {
@@ -306,71 +321,272 @@ enum AverbacaoStatus {
 
 enum TipoEmpresa {
   CONSIGNATARIA
-  CONSIGNANTE 
+  CONSIGNANTE
   AGENTE
-} 
+}
 
 // Modelos do DB.Center
 model Consignataria {
-  id              Int               @id @default(autoincrement())
-  nome            String            @db.VarChar(50)
-  logo            String?           @db.VarChar(50)
-  ativo           Boolean           @default(true)
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-  usuarios        Usuario[]
-  vinculos        Vinculo[]
+  id        Int        @id @default(autoincrement())
+  nome      String     @db.VarChar(100)
+  codigo    String     @unique @db.VarChar(20)
+  cnpj      String     @unique @db.VarChar(14)
+  telefone  String?    @db.VarChar(20)
+  email     String?    @db.VarChar(100)
+  ativo     Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  vinculos  Vinculo[]
+  usuarios  Usuario[]  @relation("UsuarioConsignataria")
+  contratos Contrato[]
+  transacoes TransacaoBancaria[]
 }
 
 model Consignante {
-  id              Int               @id @default(autoincrement())
-  nome            String            @db.VarChar(50)
-  logo            String?           @db.VarChar(50)
-  bancoDados      String?           @db.VarChar(50)
-  url             String?           @db.VarChar(150)
-  tipo            String?           @db.VarChar(1)
-  ativo           Boolean           @default(true)
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-  vinculos        Vinculo[]
+  id         Int       @id @default(autoincrement())
+  nome       String    @db.VarChar(50)
+  logo       String?   @db.VarChar(50)
+  bancoDados String?   @db.VarChar(50)
+  url        String?   @db.VarChar(150)
+  tipo       String?   @db.VarChar(1)
+  ativo      Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  vinculos   Vinculo[]
 }
 
 model Vinculo {
-  id              Int               @id @default(autoincrement())
+  id              Int              @id @default(autoincrement())
   consignatariaId Int
   consignanteId   Int
-  ativo           Boolean           @default(true)
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-  consignataria   Consignataria     @relation(fields: [consignatariaId], references: [id])
-  consignante     Consignante       @relation(fields: [consignanteId], references: [id])
+  ativo           Boolean          @default(true)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  consignataria   Consignataria    @relation(fields: [consignatariaId], references: [id])
+  consignante     Consignante      @relation(fields: [consignanteId], references: [id])
   usuarioVinculos UsuarioVinculo[]
-
-  @@unique([consignanteId, consignatariaId])
 }
 
 model UsuarioVinculo {
-  id              Int               @id @default(autoincrement())
-  usuarioId       Int
-  vinculoId       Int
-  ativo           Boolean           @default(true)
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-  usuario         Usuario           @relation(fields: [usuarioId], references: [id])
-  vinculo         Vinculo           @relation(fields: [vinculoId], references: [id])
+  id        Int      @id @default(autoincrement())
+  usuarioId Int
+  vinculoId Int
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  usuario   Usuario  @relation("UsuarioVinculo", fields: [usuarioId], references: [id])
+  vinculo   Vinculo  @relation(fields: [vinculoId], references: [id])
 }
 
 model UsuarioHistorico {
-  id              Int               @id @default(autoincrement())
+  id        Int      @id @default(autoincrement())
+  usuarioId Int
+  tipo      String   @db.VarChar(50)
+  descricao String   @db.Text
+  createdAt DateTime @default(now())
+  usuario   Usuario  @relation("UsuarioHistorico", fields: [usuarioId], references: [id])
+}
+
+model Servidor {
+  id            Int             @id @default(autoincrement())
+  nome          String          @db.VarChar(100)
+  matricula     String          @unique @db.VarChar(20)
+  cargo         String          @db.VarChar(100)
+  email         String?         @db.VarChar(100)
+  ativo         Boolean         @default(true)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  contratos     Contrato[]
+  OutroDesconto OutroDesconto[]
+  Margem        Margem[]
+}
+
+model Contrato {
+  id              Int                @id @default(autoincrement())
+  servidorId      Int
+  consignatariaId Int
+  status          Int                @default(3) // AGUARDANDO
+  valorParcela    Decimal            @db.Decimal(10, 2)
+  numeroParcelas  Int
+  valorTotal      Decimal            @db.Decimal(10, 2)
+  ativo           Boolean            @default(true)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  servidor        Servidor           @relation(fields: [servidorId], references: [id])
+  consignataria   Consignataria      @relation(fields: [consignatariaId], references: [id])
+  parcelas        Parcela[]
+  descontos       DescontoContrato[]
+  transacoes      TransacaoBancaria[]
+}
+
+model Parcela {
+  id         Int      @id @default(autoincrement())
+  contratoId Int
+  numero     Int
+  valor      Decimal  @db.Decimal(10, 2)
+  vencimento DateTime
+  status     Int      @default(1)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  contrato   Contrato @relation(fields: [contratoId], references: [id])
+}
+
+model DescontoContrato {
+  id          Int      @id @default(autoincrement())
+  contratoId  Int
+  valor       Decimal  @db.Decimal(10, 2)
+  competencia String   @db.VarChar(7)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  contrato    Contrato @relation(fields: [contratoId], references: [id])
+}
+
+model PayrollImport {
+  id          Int      @id @default(autoincrement())
+  competencia String   @db.VarChar(7)
+  status      Int      @default(1)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model PayrollReconciliation {
+  id              Int      @id @default(autoincrement())
+  payrollImportId Int
+  contratoId      Int
+  status          Int      @default(1)
+  diferenca       Decimal  @db.Decimal(10, 2)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model OutroDesconto {
+  id          Int      @id @default(autoincrement())
+  servidorId  Int
+  valor       Decimal  @db.Decimal(10, 2)
+  competencia String   @db.VarChar(7)
+  descricao   String   @db.VarChar(100)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  servidor    Servidor @relation(fields: [servidorId], references: [id])
+}
+
+model IntegrationConfig {
+  id        Int              @id @default(autoincrement())
+  nome      String           @db.VarChar(100)
+  tipo      String           @db.VarChar(50)
+  config    Json
+  ativo     Boolean          @default(true)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  logs      IntegrationLog[]
+}
+
+model IntegrationLog {
+  id                  Int               @id @default(autoincrement())
+  integrationConfigId Int
+  status              String            @db.VarChar(50)
+  details             String?           @db.Text
+  createdAt           DateTime          @default(now())
+  config              IntegrationConfig @relation(fields: [integrationConfigId], references: [id])
+}
+
+model JobLog {
+  id        Int      @id @default(autoincrement())
+  jobName   String   @db.VarChar(100)
+  status    String   @db.VarChar(50)
+  details   String?  @db.Text
+  duration  Int
+  createdAt DateTime @default(now())
+}
+
+model NotificationConfig {
+  id        Int      @id @default(autoincrement())
+  tipo      String   @db.VarChar(50)
+  config    Json
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Margem {
+  id         Int      @id @default(autoincrement())
+  servidorId Int
+  valor      Decimal  @db.Decimal(10, 2)
+  tipo       String   @db.VarChar(50)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  servidor   Servidor @relation(fields: [servidorId], references: [id])
+}
+
+model TransacaoBancaria {
+  id                    String            @id @default(uuid())
+  contratoId            Int
+  valor                Float
+  dataPagamento        DateTime
+  bancoId              Int
+  identificadorTransacao String           @unique
+  status               String
+  dataConciliacao      DateTime?
+  divergencias         Json?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  
+  contrato             Contrato          @relation(fields: [contratoId], references: [id])
+  banco                Consignataria     @relation(fields: [bancoId], references: [id])
+
+  @@index([contratoId])
+  @@index([bancoId])
+  @@index([status])
+  @@index([dataPagamento])
+}
+
+model Relatorio {
+  id              String      @id @default(uuid())
+  tipo            String
+  formato         String
+  filtros         Json?
+  status          String
+  dataCriacao     DateTime    @default(now())
+  dataAtualizacao DateTime    @updatedAt
+  urlDownload     String?
+  erro            String?
+  metadata        Json?
+  
   usuarioId       Int
-  usuarioSerializado String?        @db.Text
-  modifiedOn      DateTime
-  modifiedBy      Int?
-  modifiedByName  String?           @db.VarChar(300)
-  modifiedByType  String?           @db.VarChar(1)
-  ativo           Boolean           @default(true)
-  acao            String?           @db.VarChar(300)
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-  usuario         Usuario           @relation(fields: [usuarioId], references: [id])
+  usuario         Usuario     @relation(fields: [usuarioId], references: [id])
+
+  @@index([tipo])
+  @@index([status])
+  @@index([dataCriacao])
+  @@index([usuarioId])
+}
+
+model Documento {
+  id                String      @id @default(uuid())
+  tipo              String
+  nome              String
+  descricao         String?
+  mimeType          String
+  tamanho           Int
+  hash              String
+  url               String
+  urlTemp           String?
+  status            String      @default("PENDENTE")
+  tipoArmazenamento String
+  metadata          Json?
+  entidadeId        String?
+  entidadeTipo      String?
+  usuarioId         Int
+  dataCriacao       DateTime    @default(now())
+  dataAtualizacao   DateTime    @updatedAt
+  dataExpiracao     DateTime?
+  
+  usuario           Usuario     @relation(fields: [usuarioId], references: [id])
+
+  @@index([tipo])
+  @@index([status])
+  @@index([usuarioId])
+  @@index([entidadeId])
+  @@index([entidadeTipo])
+  @@index([dataCriacao])
 }
