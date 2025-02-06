@@ -590,3 +590,129 @@ model Documento {
   @@index([entidadeTipo])
   @@index([dataCriacao])
 }
+
+model Portabilidade {
+  id                String      @id @default(uuid())
+  contratoOrigemId  String
+  bancoOrigemId     Int
+  bancoDestinoId    Int
+  servidorId        Int
+  usuarioId         Int
+  valorSaldoDevedor Decimal     @db.Decimal(10, 2)
+  valorParcela      Decimal     @db.Decimal(10, 2)
+  taxaJurosAtual    Decimal     @db.Decimal(5, 2)
+  taxaJurosNova     Decimal     @db.Decimal(5, 2)
+  prazoRestante     Int
+  prazoTotal        Int
+  parcelasPagas     Int
+  status            String      @default("AGUARDANDO_ANALISE")
+  motivoRecusa      String?
+  observacoes       String?     @db.Text
+  documentos        String[]
+  protocoloBanco    String?
+  metadata          Json?
+  dataSolicitacao   DateTime    @default(now())
+  dataAprovacao     DateTime?
+  dataConclusao     DateTime?
+  dataAtualizacao   DateTime    @updatedAt
+  
+  contratoOrigem    Contrato    @relation("ContratoOrigem", fields: [contratoOrigemId], references: [id])
+  bancoOrigem       Banco       @relation("BancoOrigem", fields: [bancoOrigemId], references: [id])
+  bancoDestino      Banco       @relation("BancoDestino", fields: [bancoDestinoId], references: [id])
+  servidor          Servidor    @relation(fields: [servidorId], references: [id])
+  usuario           Usuario     @relation(fields: [usuarioId], references: [id])
+
+  @@index([status])
+  @@index([bancoOrigemId])
+  @@index([bancoDestinoId])
+  @@index([servidorId])
+  @@index([usuarioId])
+  @@index([dataSolicitacao])
+}
+
+model Refinanciamento {
+  id              String    @id @default(uuid())
+  contratoId      String
+  bancoId         Int
+  servidorId      Int
+  usuarioId       Int
+  valorContrato   Float
+  valorParcela    Float
+  taxaJurosAtual  Float
+  taxaJurosNova   Float
+  prazoTotal      Int
+  parcelasPagas   Int
+  saldoDevedor    Float
+  status          String
+  motivoRecusa    String?
+  observacoes     String?
+  protocoloBanco  String?
+  metadata        Json
+  dataCriacao     DateTime  @default(now())
+  dataAtualizacao DateTime  @updatedAt
+
+  // Relacionamentos
+  contrato        Contrato  @relation(fields: [contratoId], references: [id])
+  banco           Banco     @relation(fields: [bancoId], references: [id])
+  servidor        Servidor  @relation(fields: [servidorId], references: [id])
+  usuario         Usuario   @relation(fields: [usuarioId], references: [id])
+
+  @@index([contratoId])
+  @@index([bancoId])
+  @@index([servidorId])
+  @@index([usuarioId])
+  @@index([status])
+  @@map("refinanciamentos")
+}
+
+model ApiKey {
+  id              String          @id @default(uuid())
+  chave           String         @unique
+  nome            String
+  clienteId       String
+  permissoes      String[]
+  limitesUso      Json
+  status          String         @default("ATIVO")
+  metadata        Json?
+  criadoEm        DateTime       @default(now())
+  atualizadoEm    DateTime       @updatedAt
+  webhooks        Webhook[]
+  logs            LogIntegracao[]
+
+  @@map("api_keys")
+}
+
+model Webhook {
+  id                   String    @id @default(uuid())
+  apiKeyId            String
+  url                 String
+  eventos             String[]
+  headers             Json?
+  ativo               Boolean    @default(true)
+  tentativasMaximas   Int       @default(3)
+  intervalosRetentativa Json
+  criadoEm            DateTime  @default(now())
+  atualizadoEm        DateTime  @updatedAt
+  apiKey              ApiKey    @relation(fields: [apiKeyId], references: [id])
+
+  @@map("webhooks")
+}
+
+model LogIntegracao {
+  id              String    @id @default(uuid())
+  apiKeyId        String
+  endpoint        String
+  metodo          String
+  statusCode      Int
+  tempoResposta   Int
+  dataHora        DateTime  @default(now())
+  ip              String
+  userAgent       String
+  payload         Json?
+  response        Json?
+  apiKey          ApiKey    @relation(fields: [apiKeyId], references: [id])
+
+  @@map("logs_integracao")
+  @@index([apiKeyId, dataHora])
+  @@index([statusCode])
+}
