@@ -1,0 +1,376 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql" // ou "mysql", "sqlite", conforme seu SGBD
+  url      = env("DATABASE_URL")
+}
+
+model Produto {
+  id          Int         @id @default(autoincrement())
+  nome        String
+  descricao   String
+  preco       Float
+  ativo       Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  averbacoes  Averbacao[]
+}
+
+model Empresa {
+  id          Int         @id @default(autoincrement())
+  nome        String
+  cnpj        String      @unique
+  ativo       Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  averbacoes  Averbacao[]
+}
+
+model Perfil {
+  id         Int      @id @default(autoincrement())
+  nome       String
+  descricao  String
+  ativo      Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Averbacao {
+  id            Int               @id @default(autoincrement())
+  funcionarioId Int
+  empresaId     Int
+  produtoId     Int
+  situacaoId    Int
+  data          DateTime
+  valor         Float
+  ativo         Boolean          @default(true)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  funcionario   Funcionario      @relation(fields: [funcionarioId], references: [id])
+  empresa       Empresa          @relation(fields: [empresaId], references: [id])
+  produto       Produto          @relation(fields: [produtoId], references: [id])
+  situacao      AverbacaoSituacao @relation(fields: [situacaoId], references: [id])
+  valorTotal    Float            @default(0)
+  saldoDevedor  Float            @default(0)
+}
+
+model Funcionario {
+  id          Int         @id @default(autoincrement())
+  nome        String
+  matricula   String      @unique
+  cargo       String
+  email       String      @unique
+  ativo       Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  usuario     Usuario?
+  averbacoes  Averbacao[]
+}
+
+model Usuario {
+  id            Int          @id @default(autoincrement())
+  login         String       @unique
+  senha         String
+  email         String       @unique
+  ativo         Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  funcionario   Funcionario  @relation(fields: [funcionarioId], references: [id])
+  funcionarioId Int          @unique // Aqui mudamos para @unique já que é one-to-one
+}
+
+model AcessoVideo {
+  id          Int      @id @default(autoincrement())
+  usuarioId   Int
+  videoId     Int
+  data        DateTime @default(now())
+  ip          String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model AprovacaoFluxo {
+  id          Int      @id @default(autoincrement())
+  descricao   String
+  situacao    Int
+  ordem       Int
+  ativo       Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model AprovacaoNivel {
+  id          Int      @id @default(autoincrement())
+  descricao   String
+  nivel       Int
+  ativo       Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Assunto {
+  id              Int      @id @default(autoincrement())
+  descricao       String
+  prazo           Int
+  ativo           Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  responsaveis    AssuntoResponsavel[]
+}
+
+model AssuntoResponsavel {
+  id          Int      @id @default(autoincrement())
+  assuntoId   Int
+  usuarioId   Int
+  ativo       Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  assunto     Assunto  @relation(fields: [assuntoId], references: [id])
+}
+
+model Auditoria {
+  id              Int      @id @default(autoincrement())
+  usuarioId       Int
+  data            DateTime
+  ip              String
+  operacao        String
+  tabela          String
+  chave           String
+  dados           String?  @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// Modelos de Averbação
+
+model AverbacaoAjuste {
+  id              Int       @id @default(autoincrement())
+  averbacaoId     Int
+  tipoId          Int
+  usuarioId       Int
+  data            DateTime
+  observacao      String?   @db.Text
+  situacao        Int
+  ativo           Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  tipo            AverbacaoAjusteTipo @relation(fields: [tipoId], references: [id])
+  detalhes        AverbacaoAjusteDetalhe[]
+  arquivos        AverbacaoAjusteArquivo[]
+}
+
+model AverbacaoAjusteTipo {
+  id          Int       @id @default(autoincrement())
+  descricao   String
+  ativo       Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  ajustes     AverbacaoAjuste[]
+}
+
+model AverbacaoAjusteDetalhe {
+  id              Int       @id @default(autoincrement())
+  ajusteId        Int
+  campo           String
+  valorAnterior   String?
+  valorNovo       String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  ajuste          AverbacaoAjuste @relation(fields: [ajusteId], references: [id])
+}
+
+model AverbacaoAjusteArquivo {
+  id          Int       @id @default(autoincrement())
+  ajusteId    Int
+  nome        String
+  tipo        String
+  tamanho     Int
+  dados       Bytes
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  ajuste      AverbacaoAjuste @relation(fields: [ajusteId], references: [id])
+}
+
+model AverbacaoHistorico {
+  id              Int       @id @default(autoincrement())
+  averbacaoId     Int
+  usuarioId       Int
+  data            DateTime
+  situacao        Int
+  observacao      String?   @db.Text
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model AverbacaoImportacao {
+  id              Int       @id @default(autoincrement())
+  usuarioId       Int
+  data            DateTime
+  arquivo         String
+  situacao        Int
+  log             String?   @db.Text
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model AverbacaoParcela {
+  id              Int       @id @default(autoincrement())
+  averbacaoId     Int
+  numero          Int
+  competencia     String
+  vencimento      DateTime
+  valor           Float
+  situacao        Int
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  situacoes       AverbacaoParcelaSituacao[]
+}
+
+model AverbacaoParcelaSituacao {
+  id              Int       @id @default(autoincrement())
+  parcelaId       Int
+  situacao        Int
+  data            DateTime
+  observacao      String?   @db.Text
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  parcela         AverbacaoParcela @relation(fields: [parcelaId], references: [id])
+}
+
+model AverbacaoSituacao {
+  id          Int         @id @default(autoincrement())
+  descricao   String
+  ativo       Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  averbacoes  Averbacao[]
+}
+
+model AverbacaoTipo {
+  id              Int       @id @default(autoincrement())
+  descricao       String
+  sigla           String
+  prazo           Int
+  valorMinimo     Float
+  valorMaximo     Float
+  ativo           Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model AverbacaoTipoQuitacao {
+  id              Int       @id @default(autoincrement())
+  tipoId          Int
+  tipoQuitacaoId  Int
+  ativo           Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model AverbacaoTramitacao {
+  id              Int       @id @default(autoincrement())
+  averbacaoId     Int
+  usuarioId       Int
+  data            DateTime
+  situacao        Int
+  observacao      String?   @db.Text
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model AverbacaoVinculo {
+  id              Int       @id @default(autoincrement())
+  averbacaoId     Int
+  averbacaoPaiId  Int
+  tipo            Int
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+enum AverbacaoStatus {
+  AGUARDANDO_APROVACAO
+  APROVADO
+  REJEITADO
+  CANCELADO
+  LIQUIDADO
+  FINALIZADO
+}
+
+enum TipoEmpresa {
+  CONSIGNATARIA
+  CONSIGNANTE 
+  AGENTE
+} 
+
+// Modelos do DB.Center
+model Consignataria {
+  id              Int               @id @default(autoincrement())
+  nome            String            @db.VarChar(50)
+  logo            String?           @db.VarChar(50)
+  ativo           Boolean           @default(true)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  usuarios        Usuario[]
+  vinculos        Vinculo[]
+}
+
+model Consignante {
+  id              Int               @id @default(autoincrement())
+  nome            String            @db.VarChar(50)
+  logo            String?           @db.VarChar(50)
+  bancoDados      String?           @db.VarChar(50)
+  url             String?           @db.VarChar(150)
+  tipo            String?           @db.VarChar(1)
+  ativo           Boolean           @default(true)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  vinculos        Vinculo[]
+}
+
+model Vinculo {
+  id              Int               @id @default(autoincrement())
+  consignatariaId Int
+  consignanteId   Int
+  ativo           Boolean           @default(true)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  consignataria   Consignataria     @relation(fields: [consignatariaId], references: [id])
+  consignante     Consignante       @relation(fields: [consignanteId], references: [id])
+  usuarioVinculos UsuarioVinculo[]
+
+  @@unique([consignanteId, consignatariaId])
+}
+
+model UsuarioVinculo {
+  id              Int               @id @default(autoincrement())
+  usuarioId       Int
+  vinculoId       Int
+  ativo           Boolean           @default(true)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  usuario         Usuario           @relation(fields: [usuarioId], references: [id])
+  vinculo         Vinculo           @relation(fields: [vinculoId], references: [id])
+}
+
+model UsuarioHistorico {
+  id              Int               @id @default(autoincrement())
+  usuarioId       Int
+  usuarioSerializado String?        @db.Text
+  modifiedOn      DateTime
+  modifiedBy      Int?
+  modifiedByName  String?           @db.VarChar(300)
+  modifiedByType  String?           @db.VarChar(1)
+  ativo           Boolean           @default(true)
+  acao            String?           @db.VarChar(300)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  usuario         Usuario           @relation(fields: [usuarioId], references: [id])
+}

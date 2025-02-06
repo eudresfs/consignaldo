@@ -1,0 +1,30 @@
+export enum AverbacaoSituacao {
+  CANCELADO = 0,
+  ATIVO = 1,
+  AVERBADO = 2,
+  AGUARDANDO_APROVACAO = 3,
+  RESERVADO = 4,
+  DESAPROVADO = 5,
+  SUSPENSO_MARGEM_LIVRE = 6,
+  BLOQUEADO_MARGEM_RETIDA = 7,
+  EM_PROCESSO_COMPRA = 8,
+  COMPRADO = 9,
+  LIQUIDADO = 10,
+  CONCLUIDO = 11,
+  PRE_RESERVA = 12
+}
+
+export enum AverbacaoTipo {
+  NORMAL = 1,
+  COMPRA = 2,
+  RENEGOCIACAO = 3,
+  COMPRA_E_RENEGOCIACAO = 4
+}
+
+export enum AverbacaoParcelaSituacao {
+  CANCELADA = 0,
+  ABERTA = 1,
+  LIQUIDADA_FOLHA = 2,
+  LIQUIDADA_MANUAL = 3,
+  REJEITADA_FOLHA = 4
+}

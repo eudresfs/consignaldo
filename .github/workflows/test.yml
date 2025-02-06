@@ -1,0 +1,96 @@
+name: Testes Automatizados
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Instalar dependências
+      run: npm ci
+
+    - name: Gerar Prisma Client
+      run: npx prisma generate
+
+    - name: Executar Migrations
+      run: npx prisma migrate deploy
+      env:
+        DATABASE_URL: postgresql://test:test@localhost:5432/test_db
+
+    - name: Testes Unitários
+      run: npm run test:unit
+      env:
+        DATABASE_URL: postgresql://test:test@localhost:5432/test_db
+        NODE_ENV: test
+
+    - name: Testes de Integração
+      run: npm run test:integration
+      env:
+        DATABASE_URL: postgresql://test:test@localhost:5432/test_db
+        NODE_ENV: test
+
+    - name: Testes de Conformidade
+      run: npm run test:compliance
+      env:
+        DATABASE_URL: postgresql://test:test@localhost:5432/test_db
+        NODE_ENV: test
+
+    - name: Testes de Segurança
+      run: npm run test:security
+      env:
+        DATABASE_URL: postgresql://test:test@localhost:5432/test_db
+        NODE_ENV: test
+
+    - name: Testes de Resiliência
+      run: npm run test:resilience
+      env:
+        DATABASE_URL: postgresql://test:test@localhost:5432/test_db
+        NODE_ENV: test
+
+    - name: Upload Relatório de Cobertura
+      uses: actions/upload-artifact@v2
+      with:
+        name: coverage-report
+        path: coverage/
+
+    - name: Verificar Cobertura Mínima
+      run: |
+        COVERAGE=$(npm run test:coverage | grep "All files" | awk '{print $4}' | sed 's/%//')
+        if (( $(echo "$COVERAGE < 85" | bc -l) )); then
+          echo "Cobertura de testes abaixo do mínimo requerido (85%)"
+          exit 1
+        fi
+
+    - name: SonarCloud Scan
+      uses: SonarSource/sonarcloud-github-action@master
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
