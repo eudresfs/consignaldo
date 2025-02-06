@@ -1,5 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import {
   HealthCheckService,
   HttpHealthIndicator,
@@ -10,7 +10,7 @@ import {
 } from '@nestjs/terminus';
 import { PrismaService } from '../infrastructure/prisma.service';
 
-@ApiTags('Health')
+@ApiTags('health')
 @Controller('health')
 export class HealthController {
   constructor(
@@ -24,7 +24,24 @@ export class HealthController {
 
   @Get()
   @HealthCheck()
-  @ApiOperation({ summary: 'Verifica o status de saúde da aplicação' })
+  @ApiOperation({ summary: 'Verificar status da API' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'API está funcionando normalmente',
+    schema: {
+      type: 'object',
+      properties: {
+        status: {
+          type: 'string',
+          example: 'ok'
+        },
+        timestamp: {
+          type: 'string',
+          example: new Date().toISOString()
+        }
+      }
+    }
+  })
   check() {
     return this.health.check([
       // Banco de dados

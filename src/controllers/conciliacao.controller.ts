@@ -1,40 +1,48 @@
-import { Controller, Get, Post, Body, Param, Put, Delete } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
-import { Conciliacao } from '../domain/conciliacao.entity';
+import { Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { ConciliacaoService } from '../services/conciliacao.service';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { IniciarConciliacaoDTO, FiltrarConciliacoesDTO, ConsultarDivergenciasDTO } from '../dtos/conciliacao/conciliacao.dto';
+import { StatusConciliacao, IResultadoConciliacao } from '../domain/conciliacao/conciliacao.types';
 
-@ApiTags('Conciliacao')
+@ApiTags('Conciliação Bancária')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('conciliacao')
 export class ConciliacaoController {
   constructor(private readonly conciliacaoService: ConciliacaoService) {}
 
-  @Get()
-  @ApiOperation({ summary: 'Retorna todas as conciliações' })
-  async findAll(): Promise<Conciliacao[]> {
-    return this.conciliacaoService.findAll();
+  @Post('iniciar')
+  @Roles('ADMIN', 'FINANCEIRO')
+  @ApiOperation({ summary: 'Inicia processo de conciliação bancária' })
+  @ApiResponse({ status: 201, description: 'Conciliação iniciada com sucesso' })
+  async iniciarConciliacao(@Body() dto: IniciarConciliacaoDTO) {
+    return this.conciliacaoService.iniciarConciliacaoDiaria(dto);
   }
 
-  @Get(':id')
-  @ApiOperation({ summary: 'Retorna uma conciliação por id' })
-  async findById(@Param('id') id: number): Promise<Conciliacao> {
-    return this.conciliacaoService.findById(id);
+  @Get('status')
+  @Roles('ADMIN', 'FINANCEIRO', 'CONSULTA')
+  @ApiOperation({ summary: 'Consulta status das conciliações' })
+  @ApiResponse({ status: 200, description: 'Lista de conciliações' })
+  async consultarStatus(@Query() filtros: FiltrarConciliacoesDTO) {
+    return this.conciliacaoService.consultarStatus(filtros);
   }
 
-  @Post()
-  @ApiOperation({ summary: 'Cria uma nova conciliação' })
-  async create(@Body() data: Partial<Conciliacao>): Promise<Conciliacao> {
-    return this.conciliacaoService.create(data);
+  @Get('divergencias/:transacaoId')
+  @Roles('ADMIN', 'FINANCEIRO', 'CONSULTA')
+  @ApiOperation({ summary: 'Consulta divergências de uma transação' })
+  @ApiResponse({ status: 200, description: 'Divergências encontradas' })
+  async consultarDivergencias(@Param() params: ConsultarDivergenciasDTO) {
+    return this.conciliacaoService.consultarDivergencias(params.transacaoId);
   }
 
-  @Put(':id')
-  @ApiOperation({ summary: 'Atualiza uma conciliação existente' })
-  async update(@Param('id') id: number, @Body() data: Partial<Conciliacao>): Promise<Conciliacao> {
-    return this.conciliacaoService.update(id, data);
+  @Get('dashboard')
+  @Roles('ADMIN', 'FINANCEIRO', 'CONSULTA')
+  @ApiOperation({ summary: 'Obtém estatísticas da conciliação' })
+  @ApiResponse({ status: 200, description: 'Estatísticas de conciliação' })
+  async obterEstatisticas() {
+    return this.conciliacaoService.obterEstatisticas();
   }
-
-  @Delete(':id')
-  @ApiOperation({ summary: 'Remove uma conciliação' })
-  async remove(@Param('id') id: number): Promise<Conciliacao> {
-    return this.conciliacaoService.delete(id);
-  }
-} 
+}
