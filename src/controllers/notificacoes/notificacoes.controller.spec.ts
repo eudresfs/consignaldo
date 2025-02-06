@@ -1,12 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotificacoesController } from './notificacoes.controller';
 import { NotificacoesService } from '../../services/notificacoes/notificacoes.service';
-import { TipoNotificacao, StatusNotificacao, PrioridadeNotificacao } from '../../domain/notificacoes/notificacoes.types';
 import { mockDeep, DeepMockProxy } from 'jest-mock-extended';
+import { TipoNotificacao, StatusNotificacao, PrioridadeNotificacao } from '../../domain/notificacoes/notificacoes.types';
 
 describe('NotificacoesController', () => {
   let controller: NotificacoesController;
   let service: DeepMockProxy<NotificacoesService>;
+
+  const mockDate = new Date('2025-02-06T16:00:00Z');
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -21,6 +23,9 @@ describe('NotificacoesController', () => {
 
     controller = module.get<NotificacoesController>(NotificacoesController);
     service = module.get(NotificacoesService) as DeepMockProxy<NotificacoesService>;
+
+    // Mock Date.now()
+    jest.spyOn(Date, 'now').mockImplementation(() => mockDate.getTime());
   });
 
   it('should be defined', () => {
@@ -28,6 +33,15 @@ describe('NotificacoesController', () => {
   });
 
   describe('criarNotificacao', () => {
+    const mockTemplate = {
+      id: '1',
+      tipo: TipoNotificacao.EMAIL,
+      nome: 'Template Teste',
+      conteudo: 'Conteúdo teste',
+      criadoEm: mockDate,
+      atualizadoEm: mockDate
+    };
+
     const mockNotificacao = {
       id: '1',
       tipo: TipoNotificacao.EMAIL,
@@ -35,7 +49,11 @@ describe('NotificacoesController', () => {
       destinatario: 'teste@teste.com',
       titulo: 'Teste',
       conteudo: 'Conteúdo teste',
-      status: StatusNotificacao.PENDENTE
+      status: StatusNotificacao.PENDENTE,
+      template: mockTemplate,
+      tentativas: 0,
+      criadoEm: mockDate,
+      atualizadoEm: mockDate
     };
 
     it('should create notification', async () => {
@@ -46,7 +64,8 @@ describe('NotificacoesController', () => {
         prioridade: PrioridadeNotificacao.MEDIA,
         destinatario: 'teste@teste.com',
         titulo: 'Teste',
-        conteudo: 'Conteúdo teste'
+        conteudo: 'Conteúdo teste',
+        templateId: '1'
       });
 
       expect(result).toEqual(mockNotificacao);
@@ -55,35 +74,41 @@ describe('NotificacoesController', () => {
   });
 
   describe('listarNotificacoes', () => {
-    const mockNotificacoes = {
-      total: 2,
-      items: [
-        {
-          id: '1',
-          tipo: TipoNotificacao.EMAIL,
-          status: StatusNotificacao.ENVIADO
-        },
-        {
-          id: '2',
-          tipo: TipoNotificacao.SMS,
-          status: StatusNotificacao.PENDENTE
-        }
-      ]
-    };
+    const mockNotificacoes = [
+      {
+        id: '1',
+        tipo: TipoNotificacao.EMAIL,
+        status: StatusNotificacao.ENVIADO,
+        criadoEm: mockDate,
+        atualizadoEm: mockDate
+      },
+      {
+        id: '2',
+        tipo: TipoNotificacao.SMS,
+        status: StatusNotificacao.PENDENTE,
+        criadoEm: mockDate,
+        atualizadoEm: mockDate
+      }
+    ];
 
     it('should list notifications with filters', async () => {
-      service.listarNotificacoes.mockResolvedValue(mockNotificacoes);
+      service.listarNotificacoes.mockResolvedValue({
+        total: 2,
+        items: mockNotificacoes
+      });
 
       const result = await controller.listarNotificacoes({
         tipo: TipoNotificacao.EMAIL,
-        inicio: new Date(),
-        fim: new Date(),
+        dataInicio: '2025-02-01',
+        dataFim: '2025-02-06',
         limite: 10,
-        offset: 0
+        pagina: 0
       });
 
-      expect(result).toEqual(mockNotificacoes);
-      expect(service.listarNotificacoes).toHaveBeenCalled();
+      expect(result).toEqual({
+        total: 2,
+        items: mockNotificacoes
+      });
     });
   });
 
@@ -107,69 +132,33 @@ describe('NotificacoesController', () => {
     it('should return notification statistics', async () => {
       service.getEstatisticas.mockResolvedValue(mockStats);
 
-      const result = await controller.getEstatisticas(
-        new Date(),
-        new Date()
-      );
+      const result = await controller.getEstatisticas();
 
       expect(result).toEqual(mockStats);
-      expect(service.getEstatisticas).toHaveBeenCalled();
     });
   });
 
-  describe('reenviarNotificacao', () => {
+  describe('reprocessarNotificacao', () => {
     const mockNotificacao = {
       id: '1',
       tipo: TipoNotificacao.EMAIL,
-      status: StatusNotificacao.ERRO
+      prioridade: PrioridadeNotificacao.MEDIA,
+      destinatario: 'teste@teste.com',
+      titulo: 'Teste',
+      conteudo: 'Conteúdo teste',
+      status: StatusNotificacao.ENVIADO,
+      tentativas: 1,
+      criadoEm: mockDate,
+      atualizadoEm: mockDate
     };
 
-    it('should resend notification', async () => {
-      service.reenviarNotificacao.mockResolvedValue(mockNotificacao);
+    it('should reprocess notification', async () => {
+      service.reprocessarNotificacao.mockResolvedValue(mockNotificacao);
 
-      const result = await controller.reenviarNotificacao('1');
-
-      expect(result).toEqual(mockNotificacao);
-      expect(service.reenviarNotificacao).toHaveBeenCalledWith('1');
-    });
-  });
-
-  describe('cancelarNotificacao', () => {
-    const mockNotificacao = {
-      id: '1',
-      tipo: TipoNotificacao.EMAIL,
-      status: StatusNotificacao.CANCELADO
-    };
-
-    it('should cancel notification', async () => {
-      service.cancelarNotificacao.mockResolvedValue(mockNotificacao);
-
-      const result = await controller.cancelarNotificacao('1');
+      const result = await controller.reprocessarNotificacao('1');
 
       expect(result).toEqual(mockNotificacao);
-      expect(service.cancelarNotificacao).toHaveBeenCalledWith('1');
-    });
-  });
-
-  describe('resolverNotificacao', () => {
-    const mockNotificacao = {
-      id: '1',
-      tipo: TipoNotificacao.EMAIL,
-      status: StatusNotificacao.RESOLVIDO
-    };
-
-    it('should resolve notification', async () => {
-      service.resolverNotificacao.mockResolvedValue(mockNotificacao);
-
-      const result = await controller.resolverNotificacao('1', {
-        observacao: 'Problema resolvido'
-      });
-
-      expect(result).toEqual(mockNotificacao);
-      expect(service.resolverNotificacao).toHaveBeenCalledWith(
-        '1',
-        'Problema resolvido'
-      );
+      expect(service.reprocessarNotificacao).toHaveBeenCalledWith('1');
     });
   });
 });

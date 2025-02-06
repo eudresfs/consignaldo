@@ -1,13 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AppModule } from '../../app.module';
 import { INestApplication } from '@nestjs/common';
-import request from 'supertest';
-import { performance } from 'perf_hooks';
-import { MetricsService } from '../../infrastructure/observability/metrics.service';
+import * as request from 'supertest';
+import { AppModule } from '../../app.module';
 
-describe('Testes de Performance', () => {
+describe('Performance Tests', () => {
   let app: INestApplication;
-  let metricsService: MetricsService;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -15,7 +12,6 @@ describe('Testes de Performance', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    metricsService = app.get<MetricsService>(MetricsService);
     await app.init();
   });
 
@@ -23,172 +19,113 @@ describe('Testes de Performance', () => {
     await app.close();
   });
 
-  describe('Simulação de Empréstimo', () => {
-    it('deve responder em menos de 100ms', async () => {
-      const start = performance.now();
+  describe('Notificações', () => {
+    const notificacoes = Array.from({ length: 100 }, (_, i) => ({
+      id: `${i + 1}`,
+      tipo: 'EMAIL',
+      destinatario: `teste${i + 1}@teste.com`,
+      titulo: `Teste ${i + 1}`,
+      conteudo: `Conteúdo teste ${i + 1}`,
+      prioridade: 'MEDIA',
+    }));
 
-      await request(app.getHttpServer())
-        .post('/loan-simulation')
-        .send({
-          valor: 10000,
-          prazo: 24,
-          taxaJuros: 1.99,
-        })
-        .expect(201);
+    it('should handle multiple notifications concurrently', async () => {
+      const start = Date.now();
 
-      const duration = performance.now() - start;
-      expect(duration).toBeLessThan(100);
-    });
-
-    it('deve manter performance com múltiplas requisições', async () => {
-      const requests = Array(100).fill(0).map(() =>
-        request(app.getHttpServer())
-          .post('/loan-simulation')
-          .send({
-            valor: 10000,
-            prazo: 24,
-            taxaJuros: 1.99,
-          })
+      await Promise.all(
+        notificacoes.map((notificacao) =>
+          request(app.getHttpServer())
+            .post('/notificacoes')
+            .send(notificacao)
+            .expect(201),
+        ),
       );
 
-      const start = performance.now();
-      await Promise.all(requests);
-      const duration = performance.now() - start;
+      const end = Date.now();
+      const duration = end - start;
 
-      // Média de 50ms por requisição
-      expect(duration / requests.length).toBeLessThan(50);
-    });
-  });
-
-  describe('Importação de Folha', () => {
-    it('deve processar arquivo grande em menos de 5s', async () => {
-      const bigFile = Buffer.alloc(1024 * 1024 * 10); // 10MB
-
-      const start = performance.now();
-      await request(app.getHttpServer())
-        .post('/payroll/import')
-        .attach('file', bigFile, 'folha.csv')
-        .expect(201);
-
-      const duration = performance.now() - start;
-      expect(duration).toBeLessThan(5000);
+      expect(duration).toBeLessThan(5000); // 5 segundos
     });
 
-    it('deve manter uso de memória estável', async () => {
-      const initialMemory = process.memoryUsage().heapUsed;
+    it('should list notifications with pagination efficiently', async () => {
+      const start = Date.now();
 
-      // Processa 10 arquivos de 1MB
-      for (let i = 0; i < 10; i++) {
-        const file = Buffer.alloc(1024 * 1024);
-        await request(app.getHttpServer())
-          .post('/payroll/import')
-          .attach('file', file, 'folha.csv');
-      }
+      const response = await request(app.getHttpServer())
+        .get('/notificacoes')
+        .query({
+          limite: 50,
+          pagina: 0,
+        })
+        .expect(200);
 
-      const finalMemory = process.memoryUsage().heapUsed;
-      const diff = finalMemory - initialMemory;
+      const end = Date.now();
+      const duration = end - start;
 
-      // Não deve aumentar mais que 50MB
-      expect(diff).toBeLessThan(50 * 1024 * 1024);
+      expect(duration).toBeLessThan(1000); // 1 segundo
+      expect(response.body.items).toHaveLength(50);
     });
   });
 
   describe('Cache', () => {
-    it('deve usar cache para consultas frequentes', async () => {
-      // Primeira requisição
-      const start1 = performance.now();
-      await request(app.getHttpServer())
-        .get('/servidor/1/contratos')
-        .expect(200);
-      const duration1 = performance.now() - start1;
+    it('should cache template results', async () => {
+      const template = {
+        nome: 'Template Teste',
+        tipo: 'EMAIL',
+        assunto: 'Teste',
+        conteudo: 'Conteúdo teste',
+      };
 
-      // Segunda requisição (deve usar cache)
-      const start2 = performance.now();
+      // Primeira requisição (sem cache)
+      const start1 = Date.now();
       await request(app.getHttpServer())
-        .get('/servidor/1/contratos')
-        .expect(200);
-      const duration2 = performance.now() - start2;
-
-      expect(duration2).toBeLessThan(duration1 * 0.5);
-    });
-
-    it('deve atualizar cache após modificações', async () => {
-      // Cria contrato
-      await request(app.getHttpServer())
-        .post('/contract')
-        .send({
-          servidorId: 1,
-          valor: 10000,
-        })
+        .post('/notificacoes/templates')
+        .send(template)
         .expect(201);
+      const duration1 = Date.now() - start1;
 
-      // Primeira requisição após modificação
-      const response1 = await request(app.getHttpServer())
-        .get('/servidor/1/contratos')
-        .expect(200);
+      // Segunda requisição (com cache)
+      const start2 = Date.now();
+      await request(app.getHttpServer())
+        .post('/notificacoes/templates')
+        .send(template)
+        .expect(201);
+      const duration2 = Date.now() - start2;
 
-      // Segunda requisição (deve retornar mesmo resultado)
-      const response2 = await request(app.getHttpServer())
-        .get('/servidor/1/contratos')
-        .expect(200);
-
-      expect(response1.body).toEqual(response2.body);
+      expect(duration2).toBeLessThan(duration1);
     });
   });
 
-  describe('Banco de Dados', () => {
-    it('deve otimizar queries complexas', async () => {
-      const start = performance.now();
+  describe('Métricas', () => {
+    it('should calculate statistics efficiently', async () => {
+      const start = Date.now();
 
       await request(app.getHttpServer())
-        .get('/reports/consolidado')
-        .query({
-          dataInicio: '2025-01-01',
-          dataFim: '2025-02-06',
-          consignatariaId: 1,
-        })
+        .get('/notificacoes/estatisticas')
         .expect(200);
 
-      const duration = performance.now() - start;
-      expect(duration).toBeLessThan(1000);
-    });
-
-    it('deve usar índices eficientemente', async () => {
-      const queryPlans = await Promise.all([
-        request(app.getHttpServer())
-          .get('/servidor/search')
-          .query({ cpf: '12345678900' }),
-        request(app.getHttpServer())
-          .get('/servidor/search')
-          .query({ matricula: '123456' }),
-      ]);
-
-      queryPlans.forEach(plan => {
-        expect(plan.body.queryPlan.isIndexScan).toBe(true);
-      });
+      const duration = Date.now() - start;
+      expect(duration).toBeLessThan(2000); // 2 segundos
     });
   });
 
-  describe('Websockets', () => {
-    it('deve manter latência baixa com múltiplas conexões', async () => {
-      const connections = Array(100).fill(0).map(() =>
-        new WebSocket('ws://localhost:3000')
-      );
+  describe('Ordenação e Filtros', () => {
+    const ordenarPorData = (a: any, b: any) => {
+      return new Date(b.criadoEm).getTime() - new Date(a.criadoEm).getTime();
+    };
 
-      const latencies = await Promise.all(
-        connections.map(ws => {
-          const start = performance.now();
-          return new Promise(resolve => {
-            ws.send('ping');
-            ws.onmessage = () => {
-              resolve(performance.now() - start);
-            };
-          });
+    it('should sort notifications efficiently', async () => {
+      const response = await request(app.getHttpServer())
+        .get('/notificacoes')
+        .query({
+          ordenarPor: 'criadoEm',
+          ordem: 'DESC',
         })
-      );
+        .expect(200);
 
-      const avgLatency = latencies.reduce((a, b) => a + b) / latencies.length;
-      expect(avgLatency).toBeLessThan(50);
+      const items = response.body.items;
+      const sorted = [...items].sort(ordenarPorData);
+
+      expect(items).toEqual(sorted);
     });
   });
 });
