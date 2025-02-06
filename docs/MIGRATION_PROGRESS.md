@@ -19,7 +19,7 @@
 
 ### 2.2 Serviços Principais (95% Concluído)
 | Módulo | Status | Observações |
-|--------|---------|------------|
+|--------|-------------|------------|
 | Integração Bancária | ✅ 100% | Propostas, Retornos, Webhooks, Retry Policy |
 | Processamento de Folha | ✅ 100% | Importação, Validação, Processamento, Reconciliação |
 | Simulação de Empréstimos | ✅ 100% | Cálculos, Cache, Validações em Tempo Real |
