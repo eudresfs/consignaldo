@@ -12,7 +12,7 @@
 
 ### 2.1 Core (100% Concluído)
 | Módulo | Status | Observações |
-|--------|---------|------------|
+|--------|------------|------------|
 | Autenticação | ✅ 100% | JWT, Refresh Token, 2FA, Controle de Sessão |
 | Autorização | ✅ 100% | RBAC, Permissões Granulares, Grupos de Acesso |
 | Logging | ✅ 100% | Winston Logger, Request Tracking, Error Handling |
