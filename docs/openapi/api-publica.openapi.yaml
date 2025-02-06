@@ -1,0 +1,560 @@
+openapi: 3.0.0
+info:
+  title: Consignaldo API Pública
+  description: |
+    API Pública do sistema Consignaldo para integração com sistemas externos.
+    
+    ## Autenticação
+    Todas as requisições devem incluir a API Key no header `X-API-Key`.
+    
+    ## Rate Limiting
+    As requisições são limitadas por:
+    - Requisições por minuto
+    - Requisições por hora
+    - Requisições por dia
+    - Requisições concorrentes
+    
+    ## Webhooks
+    Eventos disponíveis para notificação:
+    - CONTRATO_CRIADO
+    - CONTRATO_ATUALIZADO
+    - CONTRATO_APROVADO
+    - CONTRATO_REPROVADO
+    - CONTRATO_CANCELADO
+    - CONTRATO_LIBERADO
+    
+    ## Erros
+    Respostas de erro seguem o formato:
+    ```json
+    {
+      "sucesso": false,
+      "erro": {
+        "codigo": "ERRO_CODE",
+        "mensagem": "Descrição do erro",
+        "detalhes": {}
+      }
+    }
+    ```
+  version: 1.0.0
+  contact:
+    name: Suporte Consignaldo
+    email: suporte@consignaldo.com.br
+
+servers:
+  - url: https://api.consignaldo.com.br/v1
+    description: Produção
+  - url: https://api.staging.consignaldo.com.br/v1
+    description: Staging
+
+tags:
+  - name: API Keys
+    description: Gerenciamento de API Keys
+  - name: Webhooks
+    description: Configuração de webhooks
+  - name: Logs
+    description: Consulta de logs de integração
+  - name: Métricas
+    description: Métricas de uso da API
+
+paths:
+  /api-keys:
+    post:
+      tags:
+        - API Keys
+      summary: Criar nova API Key
+      description: Cria uma nova API Key com as permissões e limites especificados
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CriarApiKeyRequest'
+      responses:
+        '201':
+          description: API Key criada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiKeyResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    
+    get:
+      tags:
+        - API Keys
+      summary: Listar API Keys
+      description: Lista todas as API Keys com paginação
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Pagina'
+        - $ref: '#/components/parameters/ItensPorPagina'
+      responses:
+        '200':
+          description: Lista de API Keys
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListaApiKeysResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api-keys/{id}:
+    put:
+      tags:
+        - API Keys
+      summary: Atualizar API Key
+      description: Atualiza uma API Key existente
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AtualizarApiKeyRequest'
+      responses:
+        '200':
+          description: API Key atualizada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiKeyResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api-keys/{id}/webhooks:
+    post:
+      tags:
+        - Webhooks
+      summary: Configurar webhook
+      description: Configura um novo webhook para a API Key
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookConfigRequest'
+      responses:
+        '201':
+          description: Webhook configurado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /logs:
+    get:
+      tags:
+        - Logs
+      summary: Buscar logs
+      description: Busca logs de integração com filtros
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Pagina'
+        - $ref: '#/components/parameters/ItensPorPagina'
+        - name: apiKeyId
+          in: query
+          schema:
+            type: string
+        - name: endpoint
+          in: query
+          schema:
+            type: string
+        - name: statusCode
+          in: query
+          schema:
+            type: integer
+        - name: dataInicio
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: dataFim
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Lista de logs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListaLogsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api-keys/{id}/metricas:
+    get:
+      tags:
+        - Métricas
+      summary: Obter métricas
+      description: Obtém métricas de uso da API Key
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: periodo
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [hora, dia, semana, mes]
+      responses:
+        '200':
+          description: Métricas de uso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetricasResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+  parameters:
+    Pagina:
+      name: pagina
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+      description: Número da página
+    
+    ItensPorPagina:
+      name: itensPorPagina
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+      description: Itens por página
+
+  responses:
+    BadRequest:
+      description: Requisição inválida
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErroResponse'
+    
+    Unauthorized:
+      description: Não autorizado
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErroResponse'
+    
+    Forbidden:
+      description: Acesso negado
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErroResponse'
+    
+    NotFound:
+      description: Recurso não encontrado
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErroResponse'
+
+  schemas:
+    CriarApiKeyRequest:
+      type: object
+      required:
+        - nome
+        - clienteId
+        - permissoes
+        - limitesUso
+      properties:
+        nome:
+          type: string
+          example: "API Cliente X"
+        clienteId:
+          type: string
+          example: "123"
+        permissoes:
+          type: array
+          items:
+            type: string
+          example: ["READ", "WRITE"]
+        limitesUso:
+          $ref: '#/components/schemas/LimitesUso'
+        metadata:
+          type: object
+
+    AtualizarApiKeyRequest:
+      type: object
+      properties:
+        nome:
+          type: string
+        permissoes:
+          type: array
+          items:
+            type: string
+        limitesUso:
+          $ref: '#/components/schemas/LimitesUso'
+        status:
+          type: string
+          enum: [ATIVO, INATIVO, SUSPENSO]
+        metadata:
+          type: object
+
+    WebhookConfigRequest:
+      type: object
+      required:
+        - url
+        - eventos
+        - tentativasMaximas
+        - intervalosRetentativa
+      properties:
+        url:
+          type: string
+          format: uri
+        eventos:
+          type: array
+          items:
+            type: string
+        headers:
+          type: object
+        ativo:
+          type: boolean
+          default: true
+        tentativasMaximas:
+          type: integer
+          minimum: 1
+          maximum: 10
+        intervalosRetentativa:
+          type: array
+          items:
+            type: integer
+
+    LimitesUso:
+      type: object
+      required:
+        - requisicoesPorMinuto
+        - requisicoesPorHora
+        - requisicoesPorDia
+        - requisicoesConcorrentes
+      properties:
+        requisicoesPorMinuto:
+          type: integer
+          minimum: 1
+        requisicoesPorHora:
+          type: integer
+          minimum: 1
+        requisicoesPorDia:
+          type: integer
+          minimum: 1
+        requisicoesConcorrentes:
+          type: integer
+          minimum: 1
+
+    ApiKeyResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        chave:
+          type: string
+        nome:
+          type: string
+        clienteId:
+          type: string
+        permissoes:
+          type: array
+          items:
+            type: string
+        limitesUso:
+          $ref: '#/components/schemas/LimitesUso'
+        status:
+          type: string
+        metadata:
+          type: object
+        criadoEm:
+          type: string
+          format: date-time
+        atualizadoEm:
+          type: string
+          format: date-time
+
+    WebhookResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        apiKeyId:
+          type: string
+        url:
+          type: string
+        eventos:
+          type: array
+          items:
+            type: string
+        headers:
+          type: object
+        ativo:
+          type: boolean
+        tentativasMaximas:
+          type: integer
+        intervalosRetentativa:
+          type: array
+          items:
+            type: integer
+        criadoEm:
+          type: string
+          format: date-time
+        atualizadoEm:
+          type: string
+          format: date-time
+
+    LogResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        apiKeyId:
+          type: string
+        endpoint:
+          type: string
+        metodo:
+          type: string
+        statusCode:
+          type: integer
+        tempoResposta:
+          type: integer
+        dataHora:
+          type: string
+          format: date-time
+        ip:
+          type: string
+        userAgent:
+          type: string
+        payload:
+          type: object
+        response:
+          type: object
+
+    MetricasResponse:
+      type: object
+      properties:
+        apiKeyId:
+          type: string
+        periodo:
+          type: string
+        requisicoes:
+          type: integer
+        erros:
+          type: integer
+        tempoMedioResposta:
+          type: number
+        statusCodes:
+          type: object
+          additionalProperties:
+            type: integer
+
+    ListaApiKeysResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApiKeyResponse'
+        total:
+          type: integer
+        pagina:
+          type: integer
+        itensPorPagina:
+          type: integer
+
+    ListaLogsResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/LogResponse'
+        total:
+          type: integer
+        pagina:
+          type: integer
+        itensPorPagina:
+          type: integer
+
+    ErroResponse:
+      type: object
+      properties:
+        sucesso:
+          type: boolean
+          example: false
+        erro:
+          type: object
+          properties:
+            codigo:
+              type: string
+            mensagem:
+              type: string
+            detalhes:
+              type: object

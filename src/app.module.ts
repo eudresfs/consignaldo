@@ -10,6 +10,9 @@ import { PrismaExceptionFilter } from './infrastructure/prisma/prisma-exceptions
 import { RelatorioModule } from './modules/relatorio.module';
 import { AuditoriaModule } from './modules/auditoria.module';
 import { DocumentoModule } from './modules/documento.module';
+import { PortabilidadeModule } from './modules/portabilidade.module';
+import { RefinanciamentoModule } from './modules/refinanciamento.module';
+import { ApiPublicaModule } from './modules/api-publica.module';
 
 @Module({
   imports: [
@@ -30,6 +33,9 @@ import { DocumentoModule } from './modules/documento.module';
     RelatorioModule,
     AuditoriaModule,
     DocumentoModule,
+    PortabilidadeModule,
+    RefinanciamentoModule,
+    ApiPublicaModule,
   ],
   providers: [
     // Filtros Globais
